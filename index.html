@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToDoリスト</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .todo-list {
+        list-style: none;
+        padding: 0;
+      }
+      .todo-list li {
+        margin: 10px 0;
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .todo-list li.completed span {
+        text-decoration: line-through;
+        color: #aaa;
+      }
+      .task-content {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+      }
+      .checkbox {
+        margin-right: 10px;
+      }
+      .draggable {
+        user-select: none;
+        cursor: move;
+      }
+      .dragging {
+        opacity: 0.5;
+        background-color: #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>ToDoリスト</h1>
+      <input
+        type="text"
+        id="taskInput"
+        placeholder="新しいタスクを追加..."
+        onkeypress="handleKeyPress(event)"
+      />
+      <button onclick="addTask()">タスクを追加</button>
+      <ul id="todoList" class="todo-list"></ul>
+    </div>
+
+    <script>
+      let tasks = [];
+      let draggedEl = null;
+      let draggedIndex = -1;
+
+      function addTask() {
+        const taskInput = document.getElementById("taskInput");
+        if (taskInput.value.trim() !== "") {
+          tasks.push({ text: taskInput.value, completed: false });
+          taskInput.value = "";
+          renderTasks();
+        }
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          addTask();
+        }
+      }
+
+      function toggleCompletion(index) {
+        tasks[index].completed = !tasks[index].completed;
+        renderTasks();
+      }
+
+      function deleteTask(index) {
+        tasks.splice(index, 1);
+        renderTasks();
+      }
+
+      function handleDragStart(e, index) {
+        draggedEl = e.target;
+        draggedIndex = index;
+        e.dataTransfer.effectAllowed = "move";
+        e.target.classList.add("dragging");
+      }
+
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      }
+
+      function handleDrop(e, index) {
+        e.preventDefault();
+        e.stopPropagation();
+        tasks.splice(index, 0, tasks.splice(draggedIndex, 1)[0]);
+        draggedEl.classList.remove("dragging");
+        renderTasks();
+      }
+
+      function renderTasks() {
+        const todoList = document.getElementById("todoList");
+        todoList.innerHTML = "";
+        tasks.forEach((task, index) => {
+          const taskEl = document.createElement("li");
+          taskEl.className = `draggable ${task.completed ? "completed" : ""}`;
+          taskEl.setAttribute("draggable", true);
+          taskEl.innerHTML = `
+        <div class="task-content">
+          <input type="checkbox" class="checkbox" onchange="toggleCompletion(${index})" ${
+            task.completed ? "checked" : ""
+          }>
+          <span>${task.text}</span>
+        </div>
+        <button onclick="deleteTask(${index})">削除</button>
+      `;
+          taskEl.addEventListener("dragstart", (e) =>
+            handleDragStart(e, index)
+          );
+          taskEl.addEventListener("dragover", handleDragOver);
+          taskEl.addEventListener("drop", (e) => handleDrop(e, index));
+          todoList.appendChild(taskEl);
+        });
+      }
+    </script>
+  </body>
+</html>
